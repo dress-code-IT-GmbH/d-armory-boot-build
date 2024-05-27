@@ -1,0 +1,40 @@
+name: Update Submodules
+
+on:
+  workflow_dispatch
+
+jobs:
+  update-submodules:
+    name: Update Submodules
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: info armory-boot latest commit
+        run: |
+          pushd armory-boot
+          git log | head -10
+          popd
+
+      - name: Update submodules
+        run: |
+          git submodule update  --init --recursive --remote -f
+
+      - name: Authorize Git
+        run: |
+          git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          git config --global user.name "$GITHUB_ACTOR"
+
+      - name: Commit armory-boot changes
+        run: |
+          git add armory-boot
+          git status | grep "nothing to commit" && echo "commit=0" && exit 0 || echo "commit=1"
+          git commit -m "Update armory-boot to latest commit"
+          git push origin main
